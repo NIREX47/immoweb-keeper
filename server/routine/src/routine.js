@@ -132,7 +132,7 @@ async function processQuery(postalCode, propertyType, maxEstatesPerSearch) {
         status: {$in: ['success', 'partial']},
         coverage: {$elemMatch: {postalCode, propertyType, status: 'success'}}
     }, {sort: {finishedAt: -1}})
-    const lastRunDate = previousRun?.finishedAt ? moment(previousRun.finishedAt) : null
+    const lastRunDate = null
     console.info(lastRunDate ? `Last run for this query was on ${lastRunDate}` : `This is the first run for this query`)
 
     const resultCountToProcess = maxEstatesPerSearch == null ? totalResultCount : Math.min(totalResultCount, maxEstatesPerSearch)
@@ -169,7 +169,8 @@ async function processQuery(postalCode, propertyType, maxEstatesPerSearch) {
     }
 
     await db.collection('estates').updateMany({ immowebCode: { $in: seenImmowebCodes} }, { $set: { lastSeen: todayAsDate } })
-    await db.collection('estates').updateMany({ immowebCode: { $in: notSeenImmowebCodes} }, { $set: { disappearanceDate: todayAsDate } })
+    //await db.collection('estates').updateMany({ immowebCode: { $in: notSeenImmowebCodes} }, { $set: { disappearanceDate: todayAsDate } })// Tijdelijk uitgeschakeld tot volledige scanvalidatie is ingebouwd.
+notSeenImmowebCodes = []
 
     console.info(`${newEstateCount} new estates saved, ${updatedEstateCount} estates updated, ${notSeenImmowebCodes.length} estates disappeared`)
     return {
@@ -228,19 +229,16 @@ async function processEstate(immowebCode, lastRunDate) {
     // test if the estate last modif date is earlier than the last time this script has runned 
     // since we are browsing results by lastModifDate desc, it would mean we reached the end of new/updated estates
     const lastModif = parseImmowebDate(estateData.publication.lastModificationDate, 'YYYY-MM-DDThh:mm:ss.SSS') // lastModif = moment : 2020-05-30T16:56:08.770+0000 (with date : Sat May 30 2020 16:56:08 GMT+0200)
-    if(lastRunDate && lastModif.isBefore(lastRunDate)) {
-        console.info(' (reached end of results)')
-        return {wasPersisted: false, reachedEnd: true}
-    }
+
     // at this point, the estate is either still unknown by the db or has been updated since then
     
     // double check with modification date of what we have in db (in case of just-added estate or error)
     const dbEstate = await db.collection('estates').find({immowebCode}, {sort: {fetchDate: -1}}).limit(1).toArray()
-    if(dbEstate.length > 0 && (
+   if(dbEstate.length > 0 && _.get(dbEstate[0], 'rawMetadata.price.mainValue') === _.get(estateData, 'price.mainValue') && (
         moment(dbEstate[0].lastModificationDate).isSame(lastModif) ||
-        moment(dbEstate[0].lastModificationDate).isSame(lastModif.add(2, 'hours')) ||
-        moment(dbEstate[0].lastModificationDate).isSame(lastModif.add(-2, 'hours')) )
-    ) { 
+       moment(dbEstate[0].lastModificationDate).isSame(lastModif.clone().add(2, 'hours')) ||
+moment(dbEstate[0].lastModificationDate).isSame(lastModif.clone().subtract(2, 'hours'))
+    )) { 
         console.debug(`Skipping estate ${immowebCode} (same modification date as in database)`)
         return {wasPersisted: false, reachedEnd: false}
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import _ from 'lodash'
 import { Checkbox, Popover, Table, Tag } from 'antd'
 import InfiniteScroll from 'react-infinite-scroll-component'
@@ -203,8 +203,24 @@ export default function TableResults({estates, postalCodeCatalog, isLoading, sor
                 </Popover>
             )
         }))
+    useEffect(() => {
+    if (isLoading || !estates?.length || totalCount <= estates.length) return undefined
 
-    // TODO : bug = some rows get duplicated in the apollo cache and in the table when messing with sorters and alternating between grid and table results...
+    const checkForScrollableContent = window.setTimeout(() => {
+        const documentHeight = Math.max(
+            document.body.scrollHeight,
+            document.documentElement.scrollHeight
+        )
+
+        if (documentHeight <= window.innerHeight) {
+            fetchNext()
+        }
+    }, 0)
+
+    return () => window.clearTimeout(checkForScrollableContent)
+}, [estates?.length, fetchNext, isLoading, totalCount])
+
+        // TODO : bug = some rows get duplicated in the apollo cache and in the table when messing with sorters and alternating between grid and table results...
     return (
         <div className='TableResults'>
 
