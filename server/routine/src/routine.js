@@ -55,7 +55,7 @@ async function mainRoutine() {
         added: 0,
         updated: 0,
         disappeared: 0,
-        disappearanceChecked: true
+        disappearanceChecked: false
     }
     for(const propertyType of targets.propertyTypes) {
       for(const postalCode of targets.postalCodes) {
@@ -71,9 +71,25 @@ async function mainRoutine() {
                 succeeded = true
                 break
             } catch(error) {
-                finalError = error
-                console.error(error)
-            }
+    finalError = error
+    console.error(error)
+
+    if (error.stopScan) {
+        failedQueryCount++
+
+        await saveCoverage({
+            postalCode,
+            propertyType,
+            status: 'failed',
+            errorSummary: String(error).slice(0, 2000)
+        })
+
+        await saveRoutineTotals(totals)
+
+        console.error('Scan stopped because access was restricted.')
+        process.exit(1)
+    }
+}
         }
         if(!succeeded) {
             failedQueryCount++
@@ -214,7 +230,8 @@ async function processPage(url, pageNumber, shouldOnlyCollectImmowebCodes, lastR
             isUpdate ? updatedEstateCount++ : newEstateCount++
         } catch(error) {
             console.info(error)
-            console.error(`Error while processing immoweb code ${immowebCode} !`)
+            console.error(`Error while processing immoweb code ${immowebCode} !`, error)
+             throw error
         }
     }
     
@@ -288,7 +305,22 @@ function parseImmowebDate(string) {
 async function parseResultsPage(searchPageURL) {
     for(let retries = 0; retries < 3; ++retries) {
         try {
-            const html = await needle('get', searchPageURL)
+            const html = await needle('get', searchPageURL, {
+    open_timeout: 10000,
+    response_timeout: 15000,
+    read_timeout: 30000
+})
+            if ([403, 429].includes(html.statusCode)) {
+    const error = new Error(
+        `Immoweb access restricted: HTTP ${html.statusCode}`
+    )
+    error.stopScan = true
+    throw error
+}
+
+if (html.statusCode !== 200) {
+    throw new Error(`HTTP ${html.statusCode}`)
+}
             const dom = new JSDOM(html.body)
             const iwsearch = dom.window.document.querySelector('iw-search')
             return {
@@ -298,14 +330,34 @@ async function parseResultsPage(searchPageURL) {
                 results:            JSON.parse(iwsearch.getAttribute(':results'))
             }
         } catch(err) {
-            console.error(`Retrying after error when fetching results page : ${err}`)
-        }
-    }
+    if (err.stopScan) throw err
+    console.error(`Retrying after error when fetching results page : ${err}`)
+}
+    } 
+    throw new Error(`Search page failed after 3 attempts: ${searchPageURL}`)
 }
 
 async function parseEstatePage(immowebCode) {
     const estateURL = `https://www.immoweb.be/en/classified/${immowebCode}`;
-    const html = await needle('get', estateURL, { follow_max: 10 });
+    const html = await needle('get', estateURL, {
+    follow_max: 10,
+    open_timeout: 10000,
+    response_timeout: 15000,
+    read_timeout: 30000
+})
+    if ([403, 429].includes(html.statusCode)) {
+    const error = new Error(
+        `Immoweb access restricted: HTTP ${html.statusCode}`
+    )
+    error.stopScan = true
+    throw error
+}
+
+if (html.statusCode !== 200) {
+    throw new Error(
+        `Estate ${immowebCode}: HTTP ${html.statusCode}`
+    )
+}
     const jsonMatch = /window\.classified\s*=\s*({[\s\S]*?});/.exec(html.body);
     if (!jsonMatch) {
       throw new Error('Failed to find JSON data in HTML document.');
@@ -343,23 +395,56 @@ async function connectDB(uri, database) {
  */
 
 async function downloadFile(url, outputPath) {
-    const dir = Path.dirname(outputPath)
-    if(!fs.existsSync(dir)) {
-        await fs.promises.mkdir(dir, {recursive: true})
-    }
-    const file = fs.createWriteStream(outputPath)
-    return new Promise((resolve, reject) => {
-        https.get(url, res => {
-            res.pipe(file)
-            file.on('finish', () => {
-                file.close()
-                resolve()
-            })
-        }).on('error', err => {
-            fs.unlink(outputPath)
-            reject(err.message)
-        })
+    const { pipeline } = require('node:stream/promises')
+    const { randomUUID } = require('node:crypto')
+
+    const tempPath = `${outputPath}.${randomUUID()}.part`
+
+    await fs.promises.mkdir(Path.dirname(outputPath), {
+        recursive: true
     })
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 60000)
+
+    try {
+        await new Promise((resolve, reject) => {
+            const request = https.get(url, {
+                signal: controller.signal
+            }, response => {
+
+                if (response.statusCode !== 200) {
+                    const error = new Error(
+                        `Image download HTTP ${response.statusCode}`
+                    )
+
+                    if ([403, 429].includes(response.statusCode)) {
+                        error.stopScan = true
+                    }
+
+                    response.resume()
+                    reject(error)
+                    return
+                }
+
+                pipeline(
+                    response,
+                    fs.createWriteStream(tempPath)
+                ).then(resolve).catch(reject)
+            })
+
+            request.on('error', reject)
+        })
+
+        await fs.promises.rename(tempPath, outputPath)
+
+    } catch (error) {
+        await fs.promises.rm(tempPath, { force: true })
+        throw error
+
+    } finally {
+        clearTimeout(timer)
+    }
 }
 
 /**
