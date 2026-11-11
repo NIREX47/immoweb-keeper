@@ -13,7 +13,7 @@ async function findRoutineStatus(user) {
     const [schedule, lastRun, lastSuccessfulRun, firstRun] = await Promise.all([
         getRoutineSchedule(),
         RoutineRunModel.findOne().sort({startedAt: -1}),
-        RoutineRunModel.findOne({status: {$in: ['success', 'partial']}}).sort({finishedAt: -1}),
+        RoutineRunModel.findOne({status: 'success'}).sort({finishedAt: -1}),
         RoutineRunModel.findOne({startedAt: {$ne: null}}).sort({startedAt: 1}).select({startedAt: 1})
     ])
     return {schedule, activeRun: getActiveRun(), lastRun, lastSuccessfulRun, firstRunAt: firstRun?.startedAt}

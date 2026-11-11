@@ -67,7 +67,7 @@ async function mainRoutine() {
                 totals.added += queryTotals.added
                 totals.updated += queryTotals.updated
                 totals.disappeared += queryTotals.disappeared
-                await saveCoverage({postalCode, propertyType, status: 'success', ...queryTotals})
+                await saveCoverage({postalCode, propertyType, status: queryTotals.coverageComplete ? 'success' : 'partial', ...queryTotals})
                 succeeded = true
                 break
             } catch(error) {
@@ -188,11 +188,17 @@ async function processQuery(postalCode, propertyType, maxEstatesPerSearch) {
     //await db.collection('estates').updateMany({ immowebCode: { $in: notSeenImmowebCodes} }, { $set: { disappearanceDate: todayAsDate } })// Tijdelijk uitgeschakeld tot volledige scanvalidatie is ingebouwd.
 notSeenImmowebCodes = []
 
+    const listingsSeen = new Set(seenImmowebCodes.map(String)).size
+    const coverageComplete = resultCountToProcess === totalResultCount && listingsSeen >= totalResultCount
+    console.info(`Listing coverage: ${listingsSeen}/${totalResultCount} - ${coverageComplete ? 'COMPLETE' : 'PARTIAL'}`)
     console.info(`${newEstateCount} new estates saved, ${updatedEstateCount} estates updated, ${notSeenImmowebCodes.length} estates disappeared`)
     return {
         added: newEstateCount,
         updated: updatedEstateCount,
-        disappeared: notSeenImmowebCodes.length
+        disappeared: notSeenImmowebCodes.length,
+        totalFound: totalResultCount,
+        listingsSeen,
+        coverageComplete
     }
 }
 

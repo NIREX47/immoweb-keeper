@@ -147,10 +147,11 @@ async function startRoutine(trigger) {
     })
     child.on('close', async code => {
         const storedRun = await RoutineRunModel.findById(run.id)
-        const successes = storedRun.coverage.filter(item => item.status === 'success').length
-        const failures = storedRun.coverage.filter(item => item.status === 'failed').length
-        const status = code === 0 ? 'success' : successes && failures ? 'partial' : 'failed'
-        const summary = code === 0 ? null : (errorOutput.trim() || `Routine exited with code ${code}.`)
+        const coverage = storedRun?.coverage || []
+        const expectedCount = schedule.postalCodes.length * schedule.propertyTypes.length
+        const complete = code === 0 && coverage.length === expectedCount && coverage.every(item => item.status === 'success')
+        const status = complete ? 'success' : coverage.some(item => ['success', 'partial'].includes(item.status)) ? 'partial' : 'failed'
+        const summary = complete ? null : (errorOutput.trim() || (code === 0 ? 'One or more searches had incomplete coverage.' : `Routine exited with code ${code}.`))
         finish(status, summary).catch(error => console.error('Unable to save routine result:', error))
     })
 

@@ -1,0 +1,30 @@
+name: Check scraper reliability
+
+on:
+  push:
+    branches:
+      - fix/scan-coverage-consistency-chatgpt
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  scraper-reliability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: node --check server/routine/src/routine.js
+      - name: Blocking and exit-code handling
+        run: node scripts/test-main-routine.cjs
+      - name: Restricted listing HTTP responses
+        run: node scripts/test-estate-http.cjs
+      - name: Image download safety
+        run: node scripts/test-image-download.cjs
+      - name: Scan completeness
+        run: node scripts/test-scan-coverage.cjs

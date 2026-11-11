@@ -13,10 +13,13 @@ const routineScheduleSchema = new mongoose.Schema({
 const coverageSchema = new mongoose.Schema({
     postalCode:   Number,
     propertyType: {type: String, enum: PROPERTY_TYPES},
-    status:       {type: String, enum: ['success', 'failed']},
+    status:       {type: String, enum: ['success', 'partial', 'failed']},
     added:        Number,
     updated:      Number,
     disappeared:  Number,
+    totalFound:   Number,
+    listingsSeen: Number,
+    coverageComplete: Boolean,
     errorSummary: String
 }, {_id: false})
 
