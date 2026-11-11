@@ -173,6 +173,9 @@ type RoutineCoverage {
     added: Int
     updated: Int
     disappeared: Int
+    totalFound: Int
+    listingsSeen: Int
+    coverageComplete: Boolean
     errorSummary: String
 }
 
