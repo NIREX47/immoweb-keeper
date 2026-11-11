@@ -34,7 +34,7 @@ async function runScenario({total, limit, pages, expectedComplete}) {
         },
         console: {info: () => {}}
     }
-    const processQuery = vm.runInNewContext('(' + source.slice(start, end).trim() + ')', context)
+    const processQuery = vm.runInNewContext('(' + source.slice(start, end).trim() + '\n)', context)
     const result = await processQuery(8670, 'HOUSE', limit)
     assert.equal(result.coverageComplete, expectedComplete)
     assert.equal(result.listingsSeen, new Set(saved.map(String)).size)
