@@ -15,7 +15,7 @@ const ROUTINE_ADMIN_QUERY = gql`
         }
         routineRuns(limit: 10, postalCodes: $postalCodes, propertyType: $propertyType) @include(if: $hasMonitorLocation) {
             id trigger status startedAt finishedAt errorSummary
-            coverage { postalCode propertyType status added updated disappeared errorSummary }
+            coverage { postalCode propertyType status added updated disappeared totalFound listingsSeen coverageComplete errorSummary }
             totals { added updated disappeared disappearanceChecked }
         }
         routineHistory(postalCodes: $postalCodes, propertyType: $propertyType) @include(if: $hasMonitorLocation) {
@@ -146,17 +146,19 @@ export default function RoutineAdmin() {
         const coverage = scopedCoverages(run)
         if(!monitorPostalCodes.every(postalCode => coverage.some(item => item.postalCode === postalCode))) return null
         return {
-            status: coverage.every(item => item.status === 'success') ? 'success' : coverage.some(item => item.status === 'success') ? 'partial' : 'failed',
+            status: coverage.every(item => item.status === 'success') ? 'success' : coverage.every(item => item.status === 'failed') ? 'failed' : 'partial',
             added: coverage.reduce((sum, item) => sum + (item.added || 0), 0),
             updated: coverage.reduce((sum, item) => sum + (item.updated || 0), 0),
             disappeared: coverage.reduce((sum, item) => sum + (item.disappeared || 0), 0),
+            totalFound: coverage.some(item => item.totalFound != null) ? coverage.reduce((sum, item) => sum + (item.totalFound || 0), 0) : null,
+            listingsSeen: coverage.reduce((sum, item) => sum + (item.listingsSeen || 0), 0),
             errorSummary: coverage.map(item => item.errorSummary).filter(Boolean).join('\n')
         }
     }
     const columns = [
         {title: 'Started', dataIndex: 'startedAt', render: formatDate},
         {title: 'Trigger', dataIndex: 'trigger', render: value => <span style={{textTransform: 'capitalize'}}>{value}</span>},
-        {title: 'Coverage', render: (_, run) => <Tag color={statusColor(scopedCoverage(run)?.status)}>{(scopedCoverage(run)?.status || run.status).toUpperCase()}</Tag>},
+        {title: 'Coverage', render: (_, run) => { const scoped = scopedCoverage(run); return <Space size="small"><Tag color={statusColor(scoped?.status || run.status)}>{(scoped?.status || run.status).toUpperCase()}</Tag>{scoped?.totalFound != null && <Typography.Text type="secondary">{scoped.listingsSeen}/{scoped.totalFound}</Typography.Text>}</Space> }},
         {title: 'Duration', render: (_, run) => formatDuration(run)},
         {title: 'Added', render: (_, run) => scopedCoverage(run)?.added ?? '—'},
         {title: 'Updated', render: (_, run) => scopedCoverage(run)?.updated ?? '—'},
