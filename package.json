@@ -41,6 +41,8 @@
     "prod:routine": "npm run prod:check && docker compose --env-file deploy/config.prod.env -f compose.prod.yaml run --rm routine",
     "prod:routine:logs": "node scripts/tail-routine-log.js",
     "prod:backup": "node scripts/mongo-backup.cjs backup --env prod",
+    "prod:backup:images": "node scripts/image-backup.cjs backup",
+    "prod:backup:all": "node scripts/backup-all.cjs",
     "start": "cd server && npm start"
   },
   "devDependencies": {
