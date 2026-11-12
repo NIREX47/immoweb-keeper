@@ -30,3 +30,7 @@ jobs:
         run: node scripts/test-scan-coverage.cjs
       - name: Backup safety
         run: node scripts/test-mongo-backup.cjs
+      - name: Real image backup and retention
+        run: node scripts/test-image-backup.cjs
+      - name: Production scan kill switch
+        run: node scripts/test-production-scan-guard.cjs
