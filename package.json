@@ -18,6 +18,7 @@
     "dev:db:start": "docker compose -f compose.dev.yaml up -d --wait mongodb",
     "dev:db:stop": "docker compose -f compose.dev.yaml stop mongodb",
     "dev:db:logs": "docker compose -f compose.dev.yaml logs -f mongodb",
+    "dev:backup": "node scripts/mongo-backup.cjs backup --env dev",
     "dev:status": "docker compose -f compose.dev.yaml ps",
     "dev:routine": "npm run dev:db:start && npm run routine --prefix server",
     "dev:server": "npm run dev --prefix server",
@@ -39,6 +40,7 @@
     "prod:logs": "docker compose --env-file deploy/config.prod.env -f compose.prod.yaml logs -f app mongodb",
     "prod:routine": "npm run prod:check && docker compose --env-file deploy/config.prod.env -f compose.prod.yaml run --rm routine",
     "prod:routine:logs": "node scripts/tail-routine-log.js",
+    "prod:backup": "node scripts/mongo-backup.cjs backup --env prod",
     "start": "cd server && npm start"
   },
   "devDependencies": {
