@@ -5,6 +5,10 @@ on:
     paths:
       - 'scripts/test-mongodb-roundtrip.sh'
       - 'scripts/mongo-backup.cjs'
+      - 'scripts/image-backup.cjs'
+      - 'scripts/backup-all.cjs'
+      - 'scripts/test-image-backup.cjs'
+      - 'deploy/**'
       - 'server/**'
       - 'client/**'
       - '.github/workflows/integration-validation.yml'
