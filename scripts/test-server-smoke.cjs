@@ -32,8 +32,9 @@ async function jsonCall(query, variables, token) {
         body: JSON.stringify({query, variables}),
         signal: AbortSignal.timeout(10000)
     })
-    assert.equal(response.status, 200, 'GraphQL HTTP ' + response.status + ': ' + await response.text())
-    const result = await response.json()
+    const body = await response.text()
+    assert.equal(response.status, 200, 'GraphQL HTTP ' + response.status + ': ' + body)
+    const result = JSON.parse(body)
     assert(!result.errors, JSON.stringify(result.errors))
     return result.data
 }
