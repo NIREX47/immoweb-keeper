@@ -6,6 +6,7 @@ x-runtime-environment: &runtime-environment
   IMAGE_OUTPUT_PATH: /data/images
   ROUTINE_LOG_DIR: /data/logs/routine
   ROUTINE_LOG_RETENTION_DAYS: ${ROUTINE_LOG_RETENTION_DAYS:-90}
+  ROUTINE_EXECUTION_ENABLED: ${ROUTINE_EXECUTION_ENABLED:-false}
 
 services:
   mongodb:

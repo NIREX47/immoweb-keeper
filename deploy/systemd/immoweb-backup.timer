@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Immoweb Keeper database and image backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 Europe/Brussels
+Persistent=true
+RandomizedDelaySec=0
+Unit=immoweb-backup.service
+
+[Install]
+WantedBy=timers.target

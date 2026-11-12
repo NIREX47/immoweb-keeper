@@ -95,6 +95,18 @@ docker compose -f compose.dev.yaml exec -T mongodb mongosh immoweb_dev --quiet -
   print("PASS: development and production MongoDB instances are isolated");
 '
 
+echo "=== Combined production database and image archive ==="
+mkdir -p "$work/images/950001"
+printf 'TEST-IMAGE-CONTENT' > "$work/images/950001/screenshot.jpg"
+node scripts/backup-all.cjs
+image_archive="$(find "$work/prod-backups" -maxdepth 1 -name 'images-*.tar.gz' -type f -print -quit)"
+test -n "$image_archive"
+node scripts/image-backup.cjs verify "$image_archive"
+mkdir -p "$work/restore-images"
+tar -xzf "$image_archive" -C "$work/restore-images"
+cmp "$work/images/950001/screenshot.jpg" "$work/restore-images/950001/screenshot.jpg"
+echo "PASS: combined production backups and image restore"
+
 echo "=== Backend live HTTP and GraphQL ==="
 node scripts/test-server-smoke.cjs
 echo "PASS: full MongoDB backup/verify/delete/restore integration tests"

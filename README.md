@@ -143,7 +143,7 @@ The production image is built with the root `Dockerfile`:
 
 `compose.prod.yaml` starts MongoDB first and waits for its health check before starting the application. The application is considered healthy only after it can connect to MongoDB. MongoDB has no published production port; the application is published only on `127.0.0.1`.
 
-The application server manages the routine schedule and starts the downloader as a child process. The schedule is disabled by default and can be configured from the Routine admin page. `npm run prod:routine` remains available for deliberate command-line maintenance runs; do not use it while an application-managed run is active.
+The application server manages the routine schedule and starts the downloader as a child process. The production scanner requires an explicit `ROUTINE_EXECUTION_ENABLED=true` opt-in as well as an application schedule; its default is off. See [hosting preparation and backups](docs/hosting.md). `npm run prod:routine` remains available for deliberate command-line maintenance runs; do not use it while an application-managed run is active.
 
 ## Data model
 
@@ -175,6 +175,6 @@ This repository setup intentionally does not yet:
 
 - configure public DNS, HTTPS, or a reverse proxy;
 - deduplicate historical test data or prevent concurrent routines;
-- automate database or image backups.
+- automatically enable production backup timers or offsite replication (see [hosting and backups](docs/hosting.md)).
 
 Those concerns should be handled before retiring existing production services.
