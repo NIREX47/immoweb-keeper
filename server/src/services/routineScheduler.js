@@ -28,6 +28,11 @@ function stopScheduledTask() {
 function configureScheduledTask(schedule) {
     stopScheduledTask()
     if(!schedule.enabled) return
+    // Never start unattended production scans unless deliberately authorized.
+    if(process.env.NODE_ENV === 'production' && process.env.ROUTINE_EXECUTION_ENABLED !== 'true') {
+        console.info('Production scan execution disabled by ROUTINE_EXECUTION_ENABLED.')
+        return
+    }
 
     scheduledTask = cron.schedule(schedule.cronExpression, () => {
         startRoutine('scheduled').catch(error => console.error('Unable to start scheduled routine:', error))
@@ -96,6 +101,9 @@ async function updateRoutineSchedule({enabled, cronExpression, postalCodes, prop
 }
 
 async function startRoutine(trigger) {
+    if(process.env.NODE_ENV === 'production' && process.env.ROUTINE_EXECUTION_ENABLED !== 'true') {
+        throw new Error('Production scan execution disabled; set ROUTINE_EXECUTION_ENABLED=true explicitly to permit scans.')
+    }
     if(activeRun) return {started: false, run: activeRun}
 
     const schedule = await getOrCreateSchedule()
