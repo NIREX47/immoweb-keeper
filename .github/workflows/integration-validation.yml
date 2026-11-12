@@ -22,7 +22,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: MongoDB backup and restore on disposable Docker volumes
+      - name: Install backend dependencies for live API test
+        run: npm ci --prefix server --legacy-peer-deps
+      - name: MongoDB recovery and live API test on disposable Docker volumes
         run: bash scripts/test-mongodb-roundtrip.sh
 
   application-build:
