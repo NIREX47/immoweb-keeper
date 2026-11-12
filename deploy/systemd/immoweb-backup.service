@@ -1,0 +1,14 @@
+[Unit]
+Description=Immoweb Keeper production MongoDB + image backup
+Documentation=README.md
+
+[Service]
+Type=oneshot
+# Example deployment directory; adapt to your server before installation.
+User=immoweb
+Group=immoweb
+WorkingDirectory=/opt/immoweb-keeper
+UMask=0077
+ExecStart=/usr/bin/node /opt/immoweb-keeper/scripts/backup-all.cjs
+TimeoutStartSec=45min
+# Do not use ProtectHome unless external backup drives and image paths are accessible.
