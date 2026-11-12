@@ -18,7 +18,7 @@ Development and production are intentionally isolated:
 | Images | `dev/images` in this repository | Host directory configured with `PROD_IMAGES_PATH` |
 | Web address | `http://localhost:3000` | `http://localhost:8080` |
 
-Production is currently loopback-only. Public exposure, a reverse proxy, and backup automation are outside this setup.
+Production is currently loopback-only. Public exposure and a reverse proxy are outside this setup. A separately configured MongoDB backup/verification/restore tool is described in [Backup and recovery](docs/backups.md); host scheduling is optional and not enabled automatically.
 
 ## Requirements
 
