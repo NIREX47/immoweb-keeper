@@ -95,4 +95,6 @@ docker compose -f compose.dev.yaml exec -T mongodb mongosh immoweb_dev --quiet -
   print("PASS: development and production MongoDB instances are isolated");
 '
 
+echo "=== Backend live HTTP and GraphQL ==="
+node scripts/test-server-smoke.cjs
 echo "PASS: full MongoDB backup/verify/delete/restore integration tests"
