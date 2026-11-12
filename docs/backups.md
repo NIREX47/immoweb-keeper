@@ -60,4 +60,4 @@ For an always-on Linux host, an example weekly *database-only* crontab entry is:
 
 Adjust paths and timezone; configure a disk-space monitor and failure alert before relying on this unattended. The command requires working Docker access and an existing PROD_BACKUPS_PATH. The backup log should not be published.
 
-For full disaster recovery, independently back up the production images directory and deploy/config.prod.env (including the JWT secret) securely, with access limited to administrators. Test a restore periodically in a separate environment.
+For full disaster recovery, back up production images using `npm run prod:backup:images` or both the database and images using `npm run prod:backup:all`. A daily, opt-in systemd timer template is explained in [hosting](hosting.md); it does not activate automatically. Back up deploy/config.prod.env (including the JWT secret) separately and securely, with access limited to administrators. Test a restore periodically in a separate environment.
