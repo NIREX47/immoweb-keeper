@@ -175,6 +175,6 @@ This repository setup intentionally does not yet:
 
 - configure public DNS, HTTPS, or a reverse proxy;
 - deduplicate historical test data or prevent concurrent routines;
-- automate database or image backups.
+- automatically enable production backup timers or offsite replication (see [hosting and backups](docs/hosting.md)).
 
 Those concerns should be handled before retiring existing production services.
