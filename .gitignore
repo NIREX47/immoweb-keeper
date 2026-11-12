@@ -2,6 +2,13 @@
 
 # folder with downloaded images
 images
+
+# Database archives contain private application data
+/backups/
+*.archive.gz
+*.archive.gz.json
+*.archive.gz.part
+*.archive.gz.json.part
 /dev/images/
 /deploy/config.prod.env
 /deploy/searches.prod.json
