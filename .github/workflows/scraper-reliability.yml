@@ -28,3 +28,5 @@ jobs:
         run: node scripts/test-image-download.cjs
       - name: Scan completeness
         run: node scripts/test-scan-coverage.cjs
+      - name: Backup safety
+        run: node scripts/test-mongo-backup.cjs
